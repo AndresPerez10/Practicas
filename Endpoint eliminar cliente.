@@ -1,1 +1,43 @@
+public function eliminarClientePorDni(Request $datos) {
+        
+        $validatedData = ['dni' => $datos->route('dni')];
 
+        $validator = Validator::make($validatedData, 
+            ['dni' => 'regex:/^(\d{8})([A-Z])$/'],
+            ['dni.regex' => 'El formato de dni no es correcto']);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'http code' => '422',
+                'error' => $validator->errors()
+            ]);
+        }
+
+        try {
+            $cliente = Cliente::where('dni', $validatedData['dni'])->first();
+                if(is_null($cliente)) {
+                    Log::error('ocurrió un error: No se encuentra el dni ');
+                    return response()->json([
+                        'status' => true,
+                        'http code' => '404',
+                        'mensaje' => 'Dni inexistente.'
+                    ]);
+                }
+        } catch(\Exception $e) {
+            Log::error('ocurrió un error: Fallo en el servidor');
+            return response()->json([
+                'status' => false,
+                'http code' => '500',
+                'error' => 'ocurrió un error: ' . $e
+            ]);
+        } 
+        
+        $cliente->delete();
+
+        return response()->json([
+            'status' => true,
+            'http code' => '200',
+            'mensaje: ' => 'cliente eliminado'
+        ]);
+    }
